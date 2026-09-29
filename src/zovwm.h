@@ -14,9 +14,9 @@
 #else
 #  include <X11/Xlib.h>
 #endif
-#include "barmodule.h"
 
 #define WSCOUNT 9 /* number of workspaces ("tags") */
+#include "barmodule.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define LENGTH(x) (sizeof(x) / sizeof((x)[0]))
