@@ -124,8 +124,10 @@ barconf_load(void) {
 	setdefault_config();
 
 	FILE *f = fopen(configpath(), "r");
-	if (!f)
-		return -1;
+	if (!f) {
+		barconf_save();
+		return 0;
+	}
 
 	char line[256];
 	while (fgets(line, sizeof line, f)) {
