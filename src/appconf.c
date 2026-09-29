@@ -184,4 +184,5 @@ appconf_load(void)
 	}
 	fclose(f);
 	appconf_reload();
+	barconf_load();
 }

@@ -138,6 +138,34 @@ void bar_cleanup(void);
 Window bar_window(void); /* barwin, for tray.c to reparent icons into */
 int bar_right_reserved(void); /* width reserved for the clock, tray icons end here */
 
+/* barmodule.h — bar module interfaces */
+void barmodule_render_workspaces(BarModule *mod, int x, int w);
+void barmodule_render_layout(BarModule *mod, int x, int w);
+void barmodule_render_clienttitle(BarModule *mod, int x, int w);
+void barmodule_render_clock(BarModule *mod, int x, int w);
+void barmodule_render_keyboard(BarModule *mod, int x, int w);
+void barmodule_render_custom(BarModule *mod, int x, int w);
+
+int barmodule_width_workspaces(void);
+int barmodule_width_layout(void);
+int barmodule_width_clienttitle(void);
+int barmodule_width_clock(void);
+int barmodule_width_keyboard(void);
+int barmodule_width_custom(void);
+
+void barmodule_click_workspaces(int x, int w);
+void barmodule_click_layout(int x, int w);
+void barmodule_click_clienttitle(int x, int w);
+void barmodule_click_clock(int x, int w);
+void barmodule_click_keyboard(int x, int w);
+void barmodule_click_custom(int x, int w);
+
+/* barconf.c — configuration parser */
+int barconf_load(void);
+void barconf_save(void);
+void barmodule_set_workspace_name(int ws_idx, const char *name);
+const char *barmodule_get_workspace_name(int ws_idx);
+
 /* events.c */
 void handleevent(XEvent *ev);
 int xerror(Display *dpy, XErrorEvent *ee);
