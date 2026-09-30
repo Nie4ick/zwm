@@ -1,5 +1,7 @@
 # zwm
 
+> ⚠️ **This is a test/experimental repository. Features may be incomplete, unstable, or broken.**
+
 *([Читать на русском](README.ru.md))*
 
 A minimal tiling window manager for X11/Xorg. The core is C (Xlib, no
