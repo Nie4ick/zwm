@@ -82,6 +82,7 @@ reloadconfig(const Arg *arg)
 	appconf_reload();
 	monitorconf_apply();
 	refreshclients();
+	barconf_load();
 	bar_reload();
 	arrange();
 }
@@ -245,7 +246,7 @@ handleconfigchange(void)
 			struct inotify_event *ie = (struct inotify_event *)(buf + off);
 			if (ie->len > 0 &&
 			    (strcmp(ie->name, "keys.conf") == 0 || strcmp(ie->name, "zovwm.conf") == 0 ||
-			     strcmp(ie->name, "monitor.conf") == 0))
+			     strcmp(ie->name, "monitor.conf") == 0 || strcmp(ie->name, "bar_modules.conf") == 0))
 				reloadconfig(NULL);
 			off += (ssize_t)(sizeof(struct inotify_event) + ie->len);
 		}
