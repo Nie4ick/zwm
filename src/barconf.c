@@ -228,16 +228,18 @@ barconf_save(void) {
 	}
 
 	fprintf(f, "# zovwm bar module configuration\n");
-	fprintf(f, "# Format: module_order <type1,type2,...>\n");
+	fprintf(f, "# Format: module_order <type:pos,type:pos,...>\n");
 	fprintf(f, "# Types: workspaces, layout, clienttitle, clock, keyboard, custom\n");
-	fprintf(f, "# Default order: workspaces,layout,clienttitle,clock,keyboard\n");
+	fprintf(f, "# Positions: left, center, right\n");
+	fprintf(f, "# Default order: workspaces:left,layout:left,clienttitle:center,clock:right,keyboard:right\n");
 	fprintf(f, "\n");
 
-	/* Write module order */
+	/* Write module order with positions */
 	fprintf(f, "module_order ");
 	for (int i = 0; i < bar_module_count; i++) {
+		BarModuleType type = bar_module_order[i];
 		if (i > 0) fprintf(f, ",");
-		fprintf(f, "%s", modulename(bar_module_order[i]));
+		fprintf(f, "%s:%s", modulename(type), positionname(bar_cfg[0][type].position));
 	}
 	fprintf(f, "\n\n");
 
