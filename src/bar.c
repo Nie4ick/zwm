@@ -325,7 +325,12 @@ barmodule_width_clock(void)
 	char clockbuf[16];
 	time_t t = time(NULL);
 	struct tm *tmv = localtime(&t);
-	strftime(clockbuf, sizeof clockbuf, "%H:%M:%S", tmv);
+	int show_sec = bar_cfg[wm.curws][BAR_MODULE_CLOCK].show_seconds;
+	/* Use the same format string the renderer will use so width matches */
+	if (show_sec)
+		strftime(clockbuf, sizeof clockbuf, "%H:%M:%S", tmv);
+	else
+		strftime(clockbuf, sizeof clockbuf, "%H:%M", tmv);
 	return XTextWidth(font, clockbuf, (int)strlen(clockbuf));
 }
 
