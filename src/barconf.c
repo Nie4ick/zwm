@@ -1,12 +1,13 @@
 /* barconf.c — configuration parser for ~/.config/zovwm/bar_modules.conf.
  *
  * Format: one "key value" per line.
- *   module_order <type1> <type2> <type3> ...   (comma-separated module types)
+ *   module_order <type:pos,type:pos,...>   (type:position, positions: left/center/right)
  *   workspace_name <index> <name>               (user-defined workspace name)
  *   custom_text <index> <text>                  (custom text for BAR_MODULE_CUSTOM)
  *
  * Module types: workspaces, layout, clienttitle, clock, keyboard, custom
- * Default order: workspaces, layout, clienttitle, clock, keyboard
+ * Positions: left, center, right
+ * Default order: workspaces:left, layout:left, clienttitle:center, clock:right, keyboard:right
  * Default workspace names: "1", "2", ..., "9" */
 
 #define _POSIX_C_SOURCE 200809L
@@ -39,6 +40,24 @@ static const char *modulename(BarModuleType type) {
 	return NULL;
 }
 
+static const char *positionname(BarPosition pos) {
+	switch (pos) {
+	case BAR_POS_LEFT:   return "left";
+	case BAR_POS_CENTER: return "center";
+	case BAR_POS_RIGHT:  return "right";
+	case BAR_POS_COUNT:  return NULL;
+	}
+	return NULL;
+}
+
+static BarPosition
+parseposition(const char *s) {
+	if (strcmp(s, "left") == 0)   return BAR_POS_LEFT;
+	if (strcmp(s, "center") == 0) return BAR_POS_CENTER;
+	if (strcmp(s, "right") == 0)  return BAR_POS_RIGHT;
+	return BAR_POS_LEFT;
+}
+
 static BarModuleType
 parsesimplemodule(const char *s) {
 	if (strcmp(s, "workspaces") == 0)   return BAR_MODULE_WORKSPACES;
@@ -60,13 +79,31 @@ configpath(void) {
 
 static void
 setdefault_config(void) {
-	/* Default module order: workspaces, layout, clienttitle, clock, keyboard */
+	/* Default module order with positions:
+	 * left: workspaces, layout
+	 * center: clienttitle
+	 * right: clock, keyboard */
 	bar_module_order[0] = BAR_MODULE_WORKSPACES;
 	bar_module_order[1] = BAR_MODULE_LAYOUT;
 	bar_module_order[2] = BAR_MODULE_CLIENTTITLE;
 	bar_module_order[3] = BAR_MODULE_CLOCK;
 	bar_module_order[4] = BAR_MODULE_KEYBOARD;
 	bar_module_count = 5;
+
+	/* Assign positions to each module type */
+	bar_cfg[0][BAR_MODULE_WORKSPACES].position = BAR_POS_LEFT;
+	bar_cfg[0][BAR_MODULE_LAYOUT].position = BAR_POS_LEFT;
+	bar_cfg[0][BAR_MODULE_CLIENTTITLE].position = BAR_POS_CENTER;
+	bar_cfg[0][BAR_MODULE_CLOCK].position = BAR_POS_RIGHT;
+	bar_cfg[0][BAR_MODULE_KEYBOARD].position = BAR_POS_RIGHT;
+	bar_cfg[0][BAR_MODULE_CUSTOM].position = BAR_POS_RIGHT;
+
+	/* Copy positions to all workspaces */
+	for (int ws = 1; ws < WSCOUNT; ws++) {
+		for (int i = 0; i < BAR_MODULE_COUNT; i++) {
+			bar_cfg[ws][i].position = bar_cfg[0][i].position;
+		}
+	}
 
 	/* Default workspace names */
 	for (int i = 0; i < WSCOUNT; i++) {
@@ -86,7 +123,7 @@ setdefault_config(void) {
 static void
 applyline(const char *key, const char *val) {
 	if (strcmp(key, "module_order") == 0) {
-		/* Parse comma-separated module types */
+		/* Parse comma-separated module types with optional position */
 		bar_module_count = 0;
 		char *token = strtok((char *)val, ",");
 		while (token && bar_module_count < BAR_MODULE_COUNT) {
@@ -95,9 +132,31 @@ applyline(const char *key, const char *val) {
 			char *end = token + strlen(token) - 1;
 			while (end > token && isspace((unsigned char)*end)) *end-- = '\0';
 			
-			BarModuleType type = parsesimplemodule(token);
+			BarModuleType type = BAR_MODULE_COUNT;
+			BarPosition pos = BAR_POS_LEFT;
+			char typestr[32] = "", posstr[16] = "";
+			
+			/* Check for type:position format */
+			char *colon = strchr(token, ':');
+			if (colon) {
+				int tlen = (int)(colon - token);
+				strncpy(typestr, token, tlen);
+				typestr[tlen] = '\0';
+				strncpy(posstr, colon + 1, 15);
+				posstr[15] = '\0';
+				type = parsesimplemodule(typestr);
+				pos = parseposition(posstr);
+			} else {
+				type = parsesimplemodule(token);
+			}
+			
 			if (type != BAR_MODULE_COUNT && bar_module_count < BAR_MODULE_COUNT) {
-				bar_module_order[bar_module_count++] = type;
+				bar_module_order[bar_module_count] = type;
+				/* Set position for this module type across all workspaces */
+				for (int ws = 0; ws < WSCOUNT; ws++) {
+					bar_cfg[ws][type].position = pos;
+				}
+				bar_module_count++;
 			}
 			token = strtok(NULL, ",");
 		}

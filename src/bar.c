@@ -398,45 +398,87 @@ void
 bar_draw(void)
 {
 	char label[8], clockbuf[16];
-	int x = 0;
 
 	XSetForeground(wm.dpy, gc, col_bg);
 	XFillRectangle(wm.dpy, barwin, gc, 0, 0, (unsigned int)wm.sw, (unsigned int)cfg.bar_height);
 
-	/* Render each configured module */
+	/* Collect modules by position and calculate widths */
+	int left_count = 0, center_count = 0, right_count = 0;
+	BarModule left_mods[BAR_MODULE_COUNT], center_mods[BAR_MODULE_COUNT], right_mods[BAR_MODULE_COUNT];
+	int widths[BAR_MODULE_COUNT];
+
 	for (int i = 0; i < bar_module_count; i++) {
 		BarModuleType type = (BarModuleType)bar_module_order[i];
 		if (type >= BAR_MODULE_COUNT)
 			continue;
 
-		BarModule *mod = &bar_modules[0][i];
-		mod->x = x;
-		mod->type = type;
-		mod->is_dragging = 0;
+		BarModule *src = &bar_modules[0][i];
+		src->is_dragging = 0;
+		src->type = type;
 
 		/* Calculate width */
 		if (width_funcs[type]) {
-			mod->w = width_funcs[type]();
+			widths[i] = width_funcs[type]();
 		} else {
-			mod->w = cfg.bar_height;
+			widths[i] = cfg.bar_height;
 		}
 
-		/* Clamp width to available space */
-		if (x + mod->w > wm.sw) {
-			mod->w = wm.sw - x;
+		/* Assign to position group */
+		if (bar_cfg[wm.curws][type].position == BAR_POS_CENTER) {
+			center_mods[center_count++] = *src;
+			center_mods[center_count - 1].w = widths[i];
+		} else if (bar_cfg[wm.curws][type].position == BAR_POS_RIGHT) {
+			right_mods[right_count++] = *src;
+			right_mods[right_count - 1].w = widths[i];
+		} else {
+			left_mods[left_count++] = *src;
+			left_mods[left_count - 1].w = widths[i];
 		}
+	}
 
-		/* Render the module */
-		if (render_funcs[type]) {
-			render_funcs[type](mod, x, mod->w);
+	/* Render left modules (left-aligned) */
+	int x = 0;
+	for (int i = 0; i < left_count; i++) {
+		BarModule *mod = &left_mods[i];
+		mod->x = x;
+		if (render_funcs[mod->type]) {
+			render_funcs[mod->type](mod, x, mod->w);
 		}
+		x += mod->w + 4;
+	}
 
-		x += mod->w;
-
-		/* Add spacing between modules (except the last one) */
-		if (i < bar_module_count - 1 && x < wm.sw) {
-			x += 4;
+	/* Render center modules (centered) */
+	int total_center_w = 0;
+	for (int i = 0; i < center_count; i++) {
+		total_center_w += center_mods[i].w + 4;
+	}
+	if (total_center_w > 0)
+		total_center_w -= 4; /* Remove trailing space */
+	int center_x = (wm.sw - total_center_w) / 2;
+	for (int i = 0; i < center_count; i++) {
+		BarModule *mod = &center_mods[i];
+		mod->x = center_x;
+		if (render_funcs[mod->type]) {
+			render_funcs[mod->type](mod, center_x, mod->w);
 		}
+		center_x += mod->w + 4;
+	}
+
+	/* Render right modules (right-aligned) */
+	int total_right_w = 0;
+	for (int i = 0; i < right_count; i++) {
+		total_right_w += right_mods[i].w + 4;
+	}
+	if (total_right_w > 0)
+		total_right_w -= 4;
+	int right_x = wm.sw - total_right_w;
+	for (int i = 0; i < right_count; i++) {
+		BarModule *mod = &right_mods[i];
+		mod->x = right_x;
+		if (render_funcs[mod->type]) {
+			render_funcs[mod->type](mod, right_x, mod->w);
+		}
+		right_x += mod->w + 4;
 	}
 
 	XFlush(wm.dpy);

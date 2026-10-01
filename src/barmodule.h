@@ -19,9 +19,18 @@ typedef enum {
 	BAR_MODULE_COUNT
 } BarModuleType;
 
+/* Module position on bar */
+typedef enum {
+	BAR_POS_LEFT,
+	BAR_POS_CENTER,
+	BAR_POS_RIGHT,
+	BAR_POS_COUNT
+} BarPosition;
+
 /* Module configuration entry (from bar_modules.conf) */
 typedef struct {
 	BarModuleType type;
+	BarPosition position;
 	char custom_text[128];    /* used only for BAR_MODULE_CUSTOM */
 	char workspace_name[64];  /* user-defined name for each workspace (0..WSCOUNT-1) */
 	int  visible;             /* 1 = show, 0 = hide */
@@ -32,6 +41,7 @@ typedef struct {
 	int x;                  /* current x position on the bar */
 	int w;                  /* width in pixels */
 	BarModuleType type;
+	BarPosition position;
 	int is_dragging;        /* 1 while user is dragging this module */
 	int drag_start_x;       /* x position where drag started (for reordering) */
 	int drag_start_index;   /* original index when drag started */
