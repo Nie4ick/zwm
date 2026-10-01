@@ -34,6 +34,7 @@ typedef struct {
 	char custom_text[128];    /* used only for BAR_MODULE_CUSTOM */
 	char workspace_name[64];  /* user-defined name for each workspace (0..WSCOUNT-1) */
 	int  visible;             /* 1 = show, 0 = hide */
+	int  show_seconds;        /* 1 = show seconds in clock, 0 = hide */
 } BarModuleConfig;
 
 /* Runtime module state */

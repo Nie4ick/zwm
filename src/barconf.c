@@ -113,6 +113,7 @@ setdefault_config(void) {
 		         sizeof bar_cfg[i][BAR_MODULE_WORKSPACES].workspace_name, "%s", buf);
 		bar_cfg[i][BAR_MODULE_WORKSPACES].visible = 1;
 		bar_cfg[i][BAR_MODULE_CUSTOM].visible = 0;
+		bar_cfg[i][BAR_MODULE_CLOCK].show_seconds = 1;
 	}
 
 	/* Default custom text */
@@ -174,6 +175,11 @@ applyline(const char *key, const char *val) {
 		if (sscanf(val, "%d %127[^\n]", &idx, text) == 2 && idx >= 0 && idx < WSCOUNT) {
 			snprintf(bar_cfg[idx][BAR_MODULE_CUSTOM].custom_text,
 			         sizeof bar_cfg[idx][BAR_MODULE_CUSTOM].custom_text, "%s", text);
+		}
+	} else if (strcmp(key, "clock_show_seconds") == 0) {
+		int val_int = atoi(val);
+		for (int ws = 0; ws < WSCOUNT; ws++) {
+			bar_cfg[ws][BAR_MODULE_CLOCK].show_seconds = val_int ? 1 : 0;
 		}
 	}
 }
@@ -258,6 +264,10 @@ barconf_save(void) {
 			        bar_cfg[i][BAR_MODULE_CUSTOM].custom_text);
 		}
 	}
+
+	/* Write clock show_seconds setting */
+	fprintf(f, "\n# Show seconds in clock module (0 = hide, 1 = show)\n");
+	fprintf(f, "clock_show_seconds %d\n", bar_cfg[0][BAR_MODULE_CLOCK].show_seconds);
 
 	fclose(f);
 }

@@ -242,7 +242,11 @@ barmodule_render_clock(BarModule *mod, int x, int w)
 	char clockbuf[16];
 	time_t t = time(NULL);
 	struct tm *tmv = localtime(&t);
-	strftime(clockbuf, sizeof clockbuf, "%H:%M:%S", tmv);
+	int show_sec = bar_cfg[wm.curws][BAR_MODULE_CLOCK].show_seconds;
+	if (show_sec)
+		strftime(clockbuf, sizeof clockbuf, "%H:%M:%S", tmv);
+	else
+		strftime(clockbuf, sizeof clockbuf, "%H:%M", tmv);
 	int cw = XTextWidth(font, clockbuf, (int)strlen(clockbuf));
 	XSetForeground(wm.dpy, gc, col_fg);
 	XDrawString(wm.dpy, barwin, gc, x, ty, clockbuf, (int)strlen(clockbuf));
