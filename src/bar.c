@@ -208,10 +208,25 @@ barmodule_render_clienttitle(BarModule *mod, int x, int w)
 	if (wm.focused) {
 		char *name = NULL;
 		if (XFetchName(wm.dpy, wm.focused->win, &name) && name) {
+			int maxwidth = w - 8;
+			if (maxwidth <= 0) {
+				mod->w = 0;
+				XFree(name);
+				return;
+			}
+			int len = 0;
+			while (len < (int)strlen(name)) {
+				if (XTextWidth(font, name, len) >= maxwidth)
+					break;
+				len++;
+			}
+			char buf[512];
+			strncpy(buf, name, len);
+			buf[len] = '\0';
 			XSetForeground(wm.dpy, gc, col_fg);
-			XDrawString(wm.dpy, barwin, gc, x, ty, name, (int)strlen(name));
+			XDrawString(wm.dpy, barwin, gc, x, ty, buf, (int)strlen(buf));
 			XFree(name);
-			mod->w = XTextWidth(font, name, (int)strlen(name));
+			mod->w = XTextWidth(font, buf, (int)strlen(buf));
 		} else {
 			mod->w = 0;
 		}
