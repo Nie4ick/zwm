@@ -337,11 +337,41 @@ main(int argc, char *argv[])
 			handleconfigchange();
 #endif
 
-		time_t now = time(NULL);
-		if (now != lastclock) {
-			lastclock = now;
-			bar_draw();
+	time_t now = time(NULL);
+	if (now != lastclock) {
+		lastclock = now;
+		/* Redraw bar on time change:
+	 * - If clock shows seconds: redraw every second (time changes)
+	 * - If clock hides seconds: redraw only when minutes change
+	 * This avoids unnecessary redraws and layout shifts when seconds are hidden */
+	time_t now = time(NULL);
+	if (now != lastclock) {
+		lastclock = now;
+		int redraw = 0;
+		struct tm *tmv = localtime(&now);
+		/* Check if clock module is visible and has seconds enabled */
+		for (int i = 0; i < bar_module_count; i++) {
+			int idx = bar_module_order[i];
+			if (idx < 0 || idx >= BAR_MODULE_COUNT)
+				continue;
+			if (!bar_cfg[wm.curws][idx].visible)
+				continue;
+			if (idx == BAR_MODULE_CLOCK) {
+				if (bar_cfg[wm.curws][idx].show_seconds) {
+					redraw = 1;
+					break;
+				}
+			}
 		}
+		if (!redraw) {
+			/* Seconds hidden — only redraw when minutes change to avoid flicker */
+			struct tm *last = localtime(&lastclock);
+			if (tmv->tm_min != last->tm_min)
+				redraw = 1;
+		}
+		if (redraw)
+			bar_draw();
+	}
 	}
 	cleanup();
 	return 0;
